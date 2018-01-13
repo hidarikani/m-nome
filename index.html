@@ -4,10 +4,67 @@
     <meta charset="UTF-8">
     <title>m-nome metronome</title>
     <script>
+        let noteFrequencies = {
+            C4: 261.6,
+            D4: 293.7
+        };
+
+        let bpm = 90;
+        let beatsPerBar = 4;
+
         let audioContext = new AudioContext();
-        let oscillatorFoo = audioContext.createOscillator();
-        oscillatorFoo.connect(audioContext.destination);
-        oscillatorFoo.start(audioContext.currentTime);
+        let startTime = audioContext.currentTime = 1;
+        let noteSchedule = getNoteSchedule(startTime, bpm, 8);
+        flushNoteSchedule(noteSchedule, audioContext, beatsPerBar);
+
+        //todo: add unit tests for method
+        function getWholeNoteTime(bpm) {
+            let minute = 60;
+            return minute / bpm;
+        }
+
+        //todo: add unit tests for method
+        function getQuarterNoteTime(bpm) {
+            return getWholeNoteTime(bpm) / 4;
+        }
+
+        //todo: add unit tets for this method
+        function getNoteSchedule(startTime, bpm, n) {
+            let noteSchedule = [];
+            let currentTime = startTime;
+            let noteTime = getQuarterNoteTime(bpm);
+            let shortenedNoteTime = noteTime * 0.9; //todo: user envelopes
+
+            for (i = 0; i < n; i++) {
+                let currentNote = {};
+                currentNote.startTime = currentTime;
+                currentNote.stopTime = currentTime + shortenedNoteTime;
+                noteSchedule[i] = currentNote;
+                currentTime += noteTime;
+            }
+
+            return noteSchedule;
+        }
+
+        function flushNoteSchedule(noteSchedule, audioContext, beatsPerBar) {
+            let currentBeat = 0;
+            noteSchedule.forEach(item => {
+                let currentOscillator;
+                if (currentBeat % beatsPerBar == 0) {
+                    currentOscillator = audioContext.createOscillator();
+                    currentOscillator.frequency.value = noteFrequencies.D4;
+                    currentOscillator.connect(audioContext.destination);
+                } else {
+                    currentOscillator = audioContext.createOscillator();
+                    currentOscillator.frequency.value = noteFrequencies.C4;
+                    currentOscillator.connect(audioContext.destination);
+                }
+
+                currentOscillator.start(item.startTime);
+                currentOscillator.stop(item.stopTime);
+                currentBeat++;
+            });
+        }
     </script>
 </head>
 <body>
