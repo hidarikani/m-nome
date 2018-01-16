@@ -4,67 +4,86 @@
     <meta charset="UTF-8">
     <title>m-nome metronome</title>
     <script>
-        let noteFrequencies = {
-            C4: 261.6,
-            D4: 293.7
+        let noteNames = {
+            C: 'C',
+            D: 'D',
+            E: 'E',
+            F: 'F',
+            G: 'G',
+            A: 'A',
+            B: 'B'
+        }
+
+        let octaveNames = {
+            neg01: '-1',
+            pos04: '04'
         };
 
-        let bpm = 90;
-        let beatsPerBar = 4;
+        let noteFrequencies = {};
+        noteFrequencies[octaveNames.pos04] = {};
+        noteFrequencies[octaveNames.pos04][noteNames.C] = 261.6;
+        noteFrequencies[octaveNames.pos04][noteNames.D] = 293.7;
 
-        let audioContext = new AudioContext();
-        let startTime = audioContext.currentTime = 1;
-        let noteSchedule = getNoteSchedule(startTime, bpm, 8);
-        flushNoteSchedule(noteSchedule, audioContext, beatsPerBar);
-
-        //todo: add unit tests for method
-        function getWholeNoteTime(bpm) {
+        function getBeatTime(bpm) {
             let minute = 60;
             return minute / bpm;
         }
 
-        //todo: add unit tests for method
-        function getQuarterNoteTime(bpm) {
-            return getWholeNoteTime(bpm) / 4;
+        function getNoteFrequency(note) {
+            return noteFrequencies[note.octave][note.name];
         }
 
-        //todo: add unit tets for this method
-        function getNoteSchedule(startTime, bpm, n) {
-            let noteSchedule = [];
+        function getOscillator(audioContext, note) {
+            let osc = audioContext.createOscillator();
+            osc.frequency.value = getNoteFrequency(note);
+            osc.connect(audioContext.destination);
+            return osc;
+        }
+
+        //todo: add loop feature
+        function scheduleNoteSequence(audioContext, startTime, bpm, noteSequence) {
             let currentTime = startTime;
-            let noteTime = getQuarterNoteTime(bpm);
-            let shortenedNoteTime = noteTime * 0.9; //todo: user envelopes
-
-            for (i = 0; i < n; i++) {
-                let currentNote = {};
-                currentNote.startTime = currentTime;
-                currentNote.stopTime = currentTime + shortenedNoteTime;
-                noteSchedule[i] = currentNote;
-                currentTime += noteTime;
-            }
-
-            return noteSchedule;
-        }
-
-        function flushNoteSchedule(noteSchedule, audioContext, beatsPerBar) {
-            let currentBeat = 0;
-            noteSchedule.forEach(item => {
-                let currentOscillator;
-                if (currentBeat % beatsPerBar == 0) {
-                    currentOscillator = audioContext.createOscillator();
-                    currentOscillator.frequency.value = noteFrequencies.D4;
-                    currentOscillator.connect(audioContext.destination);
-                } else {
-                    currentOscillator = audioContext.createOscillator();
-                    currentOscillator.frequency.value = noteFrequencies.C4;
-                    currentOscillator.connect(audioContext.destination);
-                }
-
-                currentOscillator.start(item.startTime);
-                currentOscillator.stop(item.stopTime);
-                currentBeat++;
+            let beatTime = getBeatTime(bpm);
+            noteSequence.forEach(currentNote => {
+                let currentOscillator = getOscillator(audioContext, currentNote);
+                currentOscillator.start(currentTime);
+                currentOscillator.stop(currentTime + (beatTime * 0.9)); //todo: figure out how to incorporate note lengths
+                currentTime += beatTime;
             });
         }
+
+        function init() {
+            let bpm = 90;
+            let audioContext = new AudioContext();
+            let startTime = audioContext.currentTime + 1;
+
+            // audio time is not discrete
+            // a sequence is a simplified representation
+            let noteSequence = [
+                // in this version a single note can be played at a time
+                // note duration is set to the beat duration
+                {name: noteNames.D, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.D, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.D, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.D, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+                {name: noteNames.C, octave: octaveNames.pos04},
+            ];
+
+            scheduleNoteSequence(audioContext, startTime, bpm, noteSequence);
+        }
+
+        init();
     </script>
 </head>
 <body>
