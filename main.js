@@ -65,11 +65,18 @@ class Scheduler {
         this.instrument.scheduleNote(currentNote, this.nextBeatTime, stopTime);
     }
 
-    play() {
-        this.calcBeatInterval();
-        this._currentBeatTime = this.audioContext.currentTime + 0.1;
-        this.isPlaying = true;
-        setTimeout(this.scheduleNotes, this.schedulingInterval);
+    togglePlayback() {
+        if (this.isPlaying) {
+            this.isPlaying = false;
+            clearTimeout(this.timeoutHandle);
+            console.log('⏹ Stopping');
+        } else {
+            this.calcBeatInterval();
+            this._currentBeatTime = this.audioContext.currentTime + 0.1;
+            this.isPlaying = true;
+            this.timeoutHandle = setTimeout(this.scheduleNotes, this.schedulingInterval);
+            console.log('▶ Starting');
+        }
     }
 
     reset() {
@@ -78,34 +85,42 @@ class Scheduler {
     }
 }
 
-function init() {
-    let audioContext = new AudioContext();
-    // audio time is not discrete
-    // a sequence is a simplified representation
-    let noteSequence = [
-        // in this version a single note can be played at a time
-        // note duration is set to the beat duration
-        {name: noteNames.D, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.D, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.D, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.D, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-        {name: noteNames.C, octave: octaveNames.four},
-    ];
+class Metronome {
+    constructor() {
+        let audioContext = new AudioContext();
+        // audio time is not discrete
+        // a sequence is a simplified representation
+        let noteSequence = [
+            // in this version a single note can be played at a time
+            // note duration is set to the beat duration
+            {name: noteNames.D, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.D, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.D, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.D, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+            {name: noteNames.C, octave: octaveNames.four},
+        ];
+    
+        let instrument = new Instrument(audioContext);
+        this.scheduler = new Scheduler(audioContext, instrument, noteSequence);
+    }
 
-    let instrument = new Instrument(audioContext);
-    let scheduler = new Scheduler(audioContext, instrument, noteSequence);
-    scheduler.play();
+    togglePlayback() {
+        this.scheduler.togglePlayback();
+    }
 }
 
-init();
+window.metronome = new Metronome();
+
+
+
